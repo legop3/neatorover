@@ -15,12 +15,14 @@
     <div id="status">Status: Waiting for input...</div>
 
     <script>
-        let baseSpeed = 100; // Default speed
-        let maxSpeed = 200;  // Speed with Enter
-        let minSpeed = 25;   // Speed with Right Shift
+        let baseSpeed = 2; // Default speed (normalized to range -1 to 1)
+        let maxMultiplier = 2;  // Multiplier for Enter (faster)
+        let minMultiplier = 0.5; // Multiplier for Right Shift (slower)
         let leftSpeed = 0;
         let rightSpeed = 0;
-        let lastSentSpeeds = { leftSpeed: 0, rightSpeed: 0 }; // Track last sent speeds
+        let speedMultiplier = 1; // Default multiplier
+        let throttleInterval = 200; // Interval in milliseconds for sending commands
+        let lastSentTime = 0; // Timestamp of the last sent command
 
         const statusDiv = document.getElementById('status');
 
@@ -29,53 +31,54 @@
 
         // Update speeds based on key states
         function updateSpeeds() {
-            let speedMultiplier = 1;
-            if (keys.enter) speedMultiplier = maxSpeed / baseSpeed; // Enter increases speed
-            if (keys.shift) speedMultiplier = minSpeed / baseSpeed; // Right Shift decreases speed
+            speedMultiplier = 1; // Reset multiplier
+            if (keys.enter) speedMultiplier = maxMultiplier; // Enter increases speed
+            if (keys.shift) speedMultiplier = minMultiplier; // Right Shift decreases speed
 
             if (keys.w && keys.a) {
-                leftSpeed = baseSpeed * 0.5 * speedMultiplier;
-                rightSpeed = baseSpeed * speedMultiplier;
+                leftSpeed = baseSpeed * 0.5;
+                rightSpeed = baseSpeed;
             } else if (keys.w && keys.d) {
-                leftSpeed = baseSpeed * speedMultiplier;
-                rightSpeed = baseSpeed * 0.5 * speedMultiplier;
+                leftSpeed = baseSpeed;
+                rightSpeed = baseSpeed * 0.5;
             } else if (keys.s && keys.a) {
-                leftSpeed = -baseSpeed * 0.5 * speedMultiplier;
-                rightSpeed = -baseSpeed * speedMultiplier;
+                leftSpeed = -baseSpeed * 0.5;
+                rightSpeed = -baseSpeed;
             } else if (keys.s && keys.d) {
-                leftSpeed = -baseSpeed * speedMultiplier;
-                rightSpeed = -baseSpeed * 0.5 * speedMultiplier;
+                leftSpeed = -baseSpeed;
+                rightSpeed = -baseSpeed * 0.5;
             } else if (keys.w) {
-                leftSpeed = baseSpeed * speedMultiplier;
-                rightSpeed = baseSpeed * speedMultiplier;
+                leftSpeed = baseSpeed;
+                rightSpeed = baseSpeed;
             } else if (keys.s) {
-                leftSpeed = -baseSpeed * speedMultiplier;
-                rightSpeed = -baseSpeed * speedMultiplier;
+                leftSpeed = -baseSpeed;
+                rightSpeed = -baseSpeed;
             } else if (keys.a) {
-                leftSpeed = -baseSpeed * speedMultiplier;
-                rightSpeed = baseSpeed * speedMultiplier;
+                leftSpeed = -baseSpeed;
+                rightSpeed = baseSpeed;
             } else if (keys.d) {
-                leftSpeed = baseSpeed * speedMultiplier;
-                rightSpeed = -baseSpeed * speedMultiplier;
+                leftSpeed = baseSpeed;
+                rightSpeed = -baseSpeed;
             } else {
                 leftSpeed = 0;
                 rightSpeed = 0;
             }
 
-            // Only send command if speeds have changed
-            if (leftSpeed !== lastSentSpeeds.leftSpeed || rightSpeed !== lastSentSpeeds.rightSpeed) {
-                sendCommand(leftSpeed, rightSpeed);
-                lastSentSpeeds = { leftSpeed, rightSpeed }; // Update last sent speeds
+            // Throttle sending commands
+            const currentTime = Date.now();
+            if (currentTime - lastSentTime >= throttleInterval) {
+                sendCommand(leftSpeed, rightSpeed, speedMultiplier);
+                lastSentTime = currentTime;
             }
         }
 
         // Send command to the server
-        async function sendCommand(leftSpeed, rightSpeed) {
+        async function sendCommand(leftSpeed, rightSpeed, speedMultiplier) {
             try {
                 const response = await fetch('/control', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ leftSpeed, rightSpeed })
+                    body: JSON.stringify({ leftSpeed, rightSpeed, speedMultiplier })
                 });
                 const result = await response.text();
                 statusDiv.textContent = `Status: ${result}`;
