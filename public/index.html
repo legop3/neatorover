@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Controller</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        #status { margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>Tank Steering Robot Controller</h1>
+    <p>Use <strong>WASD</strong> to drive. Hold <strong>Enter</strong> to go faster, <strong>Right Shift</strong> to go slower.</p>
+    <div id="status">Status: Waiting for input...</div>
+
+    <script>
+        let baseSpeed = 100; // Default speed
+        let maxSpeed = 200;  // Speed with Enter
+        let minSpeed = 25;   // Speed with Right Shift
+        let leftSpeed = 0;
+        let rightSpeed = 0;
+        let lastSentSpeeds = { leftSpeed: 0, rightSpeed: 0 }; // Track last sent speeds
+
+        const statusDiv = document.getElementById('status');
+
+        // Key state tracking
+        const keys = { w: false, a: false, s: false, d: false, enter: false, shift: false };
+
+        // Update speeds based on key states
+        function updateSpeeds() {
+            let speedMultiplier = 1;
+            if (keys.enter) speedMultiplier = maxSpeed / baseSpeed; // Enter increases speed
+            if (keys.shift) speedMultiplier = minSpeed / baseSpeed; // Right Shift decreases speed
+
+            if (keys.w && keys.a) {
+                leftSpeed = baseSpeed * 0.5 * speedMultiplier;
+                rightSpeed = baseSpeed * speedMultiplier;
+            } else if (keys.w && keys.d) {
+                leftSpeed = baseSpeed * speedMultiplier;
+                rightSpeed = baseSpeed * 0.5 * speedMultiplier;
+            } else if (keys.s && keys.a) {
+                leftSpeed = -baseSpeed * 0.5 * speedMultiplier;
+                rightSpeed = -baseSpeed * speedMultiplier;
+            } else if (keys.s && keys.d) {
+                leftSpeed = -baseSpeed * speedMultiplier;
+                rightSpeed = -baseSpeed * 0.5 * speedMultiplier;
+            } else if (keys.w) {
+                leftSpeed = baseSpeed * speedMultiplier;
+                rightSpeed = baseSpeed * speedMultiplier;
+            } else if (keys.s) {
+                leftSpeed = -baseSpeed * speedMultiplier;
+                rightSpeed = -baseSpeed * speedMultiplier;
+            } else if (keys.a) {
+                leftSpeed = -baseSpeed * speedMultiplier;
+                rightSpeed = baseSpeed * speedMultiplier;
+            } else if (keys.d) {
+                leftSpeed = baseSpeed * speedMultiplier;
+                rightSpeed = -baseSpeed * speedMultiplier;
+            } else {
+                leftSpeed = 0;
+                rightSpeed = 0;
+            }
+
+            // Only send command if speeds have changed
+            if (leftSpeed !== lastSentSpeeds.leftSpeed || rightSpeed !== lastSentSpeeds.rightSpeed) {
+                sendCommand(leftSpeed, rightSpeed);
+                lastSentSpeeds = { leftSpeed, rightSpeed }; // Update last sent speeds
+            }
+        }
+
+        // Send command to the server
+        async function sendCommand(leftSpeed, rightSpeed) {
+            try {
+                const response = await fetch('/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leftSpeed, rightSpeed })
+                });
+                const result = await response.text();
+                statusDiv.textContent = `Status: ${result}`;
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = 'Status: Failed to send command';
+            }
+        }
+
+        // Handle keydown and keyup events
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            if (key === 'enter') {
+                keys.enter = true;
+            } else if (key === 'shift' && event.code === 'ShiftRight') {
+                keys.shift = true; // Only track Right Shift
+            } else if (keys[key] !== undefined) {
+                keys[key] = true;
+            }
+            updateSpeeds();
+        });
+
+        document.addEventListener('keyup', (event) => {
+            const key = event.key.toLowerCase();
+            if (key === 'enter') {
+                keys.enter = false;
+            } else if (key === 'shift' && event.code === 'ShiftRight') {
+                keys.shift = false; // Only track Right Shift
+            } else if (keys[key] !== undefined) {
+                keys[key] = false;
+            }
+            updateSpeeds();
+        });
+    </script>
+</body>
+</html>
