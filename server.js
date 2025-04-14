@@ -68,12 +68,14 @@ app.get('/stream', (req, res) => {
   // Spawn ffmpeg to capture webcam frames with lower latency
   const ffmpeg = spawn('ffmpeg', [
     '-f', 'v4l2', // Use Video4Linux2 for webcam input
+    '-flags', 'low_delay', // Enable low-latency mode
     '-fflags', 'nobuffer', // Minimize buffering
     '-i', '/dev/video0', // Path to the webcam device
-    '-vf', 'scale=640:480', // Resize the video to 640x480
-    '-r', '24', // Set frame rate to 24 fps (lower for less processing)
-    '-q:v', '7', // Set quality level (higher value = lower quality)
+    '-vf', 'scale=320:240', // Resize the video to 320x240 for lower processing
+    '-r', '15', // Set frame rate to 15 fps
+    '-q:v', '10', // Set quality level (higher value = lower quality, faster encoding)
     '-preset', 'ultrafast', // Use ultrafast preset for low latency
+    '-an', // Disable audio
     '-f', 'image2pipe', // Output as a stream of images
     '-vcodec', 'mjpeg', // Use MJPEG codec
     'pipe:1', // Output to stdout
@@ -84,6 +86,7 @@ app.get('/stream', (req, res) => {
     res.write(`Content-Type: image/jpeg\r\n\r\n`);
     res.write(chunk);
     res.write(`\r\n`);
+    res.flush(); // Ensure the response is flushed immediately
   });
 
   ffmpeg.stderr.on('data', (data) => {
