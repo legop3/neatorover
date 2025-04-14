@@ -5,15 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Robot Controller</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        #status { margin-top: 20px; font-size: 18px; }
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: black; color: white;}
+        #status { margin-top: 3px; font-size: 18px; }
+        .controls { margin-top: 20px; }
+        .button { 
+            display: inline-block; 
+            margin: 5px; 
+            padding: 15px 20px; 
+            font-size: 18px; 
+            background-color: gray; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        .button:active { background-color: darkgray; }
     </style>
 </head>
 <body>
     <img src="/stream" alt="Webcam Stream" />
-    <h1>Tank Steering Robot Controller</h1>
     <p>Use <strong>WASD</strong> to drive. Hold <strong>Enter</strong> to go faster, <strong>Right Shift</strong> to go slower.</p>
     <div id="status">Status: Waiting for input...</div>
+
+    <div class="controls">
+        <button class="button" id="btn-w">W</button>
+        <div>
+            <button class="button" id="btn-a">A</button>
+            <button class="button" id="btn-s">S</button>
+            <button class="button" id="btn-d">D</button>
+        </div>
+        <button class="button" id="btn-enter">Enter</button>
+        <button class="button" id="btn-shift">Shift</button>
+    </div>
 
     <script>
         let baseSpeed = 2; // Default speed (normalized to range -1 to 1)
@@ -89,30 +112,35 @@
             }
         }
 
-        // Handle keydown and keyup events
-        document.addEventListener('keydown', (event) => {
-            const key = event.key.toLowerCase();
-            if (key === 'enter') {
-                keys.enter = true;
-            } else if (key === 'shift' && event.code === 'ShiftRight') {
-                keys.shift = true; // Only track Right Shift
-            } else if (keys[key] !== undefined) {
-                keys[key] = true;
-            }
+        // Handle button press and release events
+        function handleButtonPress(key) {
+            keys[key] = true;
             updateSpeeds();
-        });
+        }
 
-        document.addEventListener('keyup', (event) => {
-            const key = event.key.toLowerCase();
-            if (key === 'enter') {
-                keys.enter = false;
-            } else if (key === 'shift' && event.code === 'ShiftRight') {
-                keys.shift = false; // Only track Right Shift
-            } else if (keys[key] !== undefined) {
-                keys[key] = false;
-            }
+        function handleButtonRelease(key) {
+            keys[key] = false;
             updateSpeeds();
-        });
+        }
+
+        // Attach event listeners to buttons
+        document.getElementById('btn-w').addEventListener('mousedown', () => handleButtonPress('w'));
+        document.getElementById('btn-w').addEventListener('mouseup', () => handleButtonRelease('w'));
+
+        document.getElementById('btn-a').addEventListener('mousedown', () => handleButtonPress('a'));
+        document.getElementById('btn-a').addEventListener('mouseup', () => handleButtonRelease('a'));
+
+        document.getElementById('btn-s').addEventListener('mousedown', () => handleButtonPress('s'));
+        document.getElementById('btn-s').addEventListener('mouseup', () => handleButtonRelease('s'));
+
+        document.getElementById('btn-d').addEventListener('mousedown', () => handleButtonPress('d'));
+        document.getElementById('btn-d').addEventListener('mouseup', () => handleButtonRelease('d'));
+
+        document.getElementById('btn-enter').addEventListener('mousedown', () => handleButtonPress('enter'));
+        document.getElementById('btn-enter').addEventListener('mouseup', () => handleButtonRelease('enter'));
+
+        document.getElementById('btn-shift').addEventListener('mousedown', () => handleButtonPress('shift'));
+        document.getElementById('btn-shift').addEventListener('mouseup', () => handleButtonRelease('shift'));
     </script>
 </body>
 </html>
