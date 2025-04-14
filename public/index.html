@@ -47,6 +47,7 @@
         let speedMultiplier = 1; // Default multiplier
         let throttleInterval = 200; // Interval in milliseconds for sending commands
         let lastSentTime = 0; // Timestamp of the last sent command
+        let keyRepeatInterval = null; // Interval for repeating key actions
 
         const statusDiv = document.getElementById('status');
 
@@ -123,6 +124,21 @@
             updateSpeeds();
         }
 
+        // Start repeating key actions
+        function startKeyRepeat() {
+            if (!keyRepeatInterval) {
+                keyRepeatInterval = setInterval(updateSpeeds, throttleInterval);
+            }
+        }
+
+        // Stop repeating key actions
+        function stopKeyRepeat() {
+            if (keyRepeatInterval) {
+                clearInterval(keyRepeatInterval);
+                keyRepeatInterval = null;
+            }
+        }
+
         // Attach event listeners to buttons
         document.getElementById('btn-w').addEventListener('mousedown', () => handleButtonPress('w'));
         document.getElementById('btn-w').addEventListener('mouseup', () => handleButtonRelease('w'));
@@ -147,6 +163,7 @@
             const key = event.key.toLowerCase();
             if (keys.hasOwnProperty(key) && !keys[key]) {
                 handleButtonPress(key);
+                startKeyRepeat();
             }
         });
 
@@ -154,6 +171,9 @@
             const key = event.key.toLowerCase();
             if (keys.hasOwnProperty(key)) {
                 handleButtonRelease(key);
+                if (!Object.values(keys).some((pressed) => pressed)) {
+                    stopKeyRepeat();
+                }
             }
         });
     </script>
