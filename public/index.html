@@ -141,6 +141,21 @@
 
         document.getElementById('btn-shift').addEventListener('mousedown', () => handleButtonPress('shift'));
         document.getElementById('btn-shift').addEventListener('mouseup', () => handleButtonRelease('shift'));
+
+        // Attach event listeners for keyboard inputs
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            if (keys.hasOwnProperty(key) && !keys[key]) {
+                handleButtonPress(key);
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            const key = event.key.toLowerCase();
+            if (keys.hasOwnProperty(key)) {
+                handleButtonRelease(key);
+            }
+        });
     </script>
 </body>
 </html>
