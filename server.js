@@ -2,7 +2,7 @@ const express = require('express');
 const { SerialPort } = require('serialport');
 const bodyParser = require('body-parser');
 const { spawn } = require('child_process');
-
+const compression = require('compression');
 
 const app = express();
 const port = 3000; // Web server port
@@ -24,6 +24,7 @@ robotPort.on('error', (err) => {
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static('public')); // Serve static files (e.g., HTML, CSS, JS)
+app.use(compression()); // Enable compression middleware
 
 // Endpoint to control the robot
 app.post('/control', (req, res) => {
